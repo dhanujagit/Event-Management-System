@@ -8,44 +8,29 @@ import {
 import { auth, googleProvider } from "./firebase";
 import { createUserProfile } from "./userService";
 
-
-
-//GOOGLE LOGIN
-
+// GOOGLE LOGIN
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-
-    // Save/update user in Firestore
-    await createUserProfile(user);
-
-    return user;
+    return result.user;
   } catch (error) {
     console.error("Google login error:", error);
+    throw error;
   }
 };
 
-
-//EMAIL LOGIN
-
+// EMAIL LOGIN (NO PROFILE CREATION HERE)
 export const loginWithEmail = async (email, password) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
-    const user = result.user;
-
-    await createUserProfile(user);
-
-    return user;
+    return result.user;
   } catch (error) {
     console.error("Email login error:", error);
+    throw error;
   }
 };
 
-
-
-//EMAIL SIGNUP
-
+// EMAIL REGISTER (ONLY HERE CREATE USER DOC)
 export const registerWithEmail = async (email, password) => {
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -56,17 +41,16 @@ export const registerWithEmail = async (email, password) => {
     return user;
   } catch (error) {
     console.error("Signup error:", error);
+    throw error;
   }
 };
 
-
-
-//LOGOUT
-
+// LOGOUT
 export const logoutUser = async () => {
   try {
     await signOut(auth);
   } catch (error) {
     console.error("Logout error:", error);
+    throw error;
   }
 };

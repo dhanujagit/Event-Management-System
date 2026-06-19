@@ -12,31 +12,41 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
+      try {
+        if (!currentUser) {
+          setUser(null);
+          setRole(null);
+          setLoading(false);
+          return;
+        }
+
+        setUser(currentUser);
+
         const docRef = doc(db, "users", currentUser.uid);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setUser(currentUser);
-          setRole(docSnap.data().role);
+          const userData = docSnap.data();
+          setRole(userData.role || null);
         } else {
-          setUser(currentUser);
-          setRole(docSnap.data().role || null);
+          setRole(null);
         }
-      } else {
+
+      } catch (error) {
+        console.error("AuthContext error:", error);
         setUser(null);
         setRole(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, role, loading }}>
+      {children}
     </AuthContext.Provider>
   );
 };

@@ -18,20 +18,26 @@ import { useAuth } from "./context/AuthContext";
 function App() {
   const { user, role, loading } = useAuth();
 
-  //prevent flicker while Firebase loads user
+  // 🔥 HARD STOP UNTIL AUTH LOADS
   if (loading) {
-    return <h1>Loading...</h1>;
+    return (
+      <div style={{ padding: 20 }}>
+        Loading app...
+      </div>
+    );
   }
 
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* ================= LOGIN ================= */}
+        {/* ================= ROOT ================= */}
         <Route
           path="/"
           element={
-            user ? <Navigate to="/dashboard" /> : <Login />
+            user
+              ? <Navigate to="/dashboard" replace />
+              : <Login />
           }
         />
 
@@ -40,11 +46,11 @@ function App() {
           path="/select-role"
           element={
             !user ? (
-              <Navigate to="/" />
-            ) : role === null ? (
-              <SelectRole />
+              <Navigate to="/" replace />
+            ) : role ? (
+              <Navigate to="/dashboard" replace />
             ) : (
-              <Navigate to="/dashboard" />
+              <SelectRole />
             )
           }
         />
@@ -54,7 +60,7 @@ function App() {
           path="/organizer-application"
           element={
             !user ? (
-              <Navigate to="/" />
+              <Navigate to="/" replace />
             ) : (
               <OrganizerApplication />
             )
@@ -66,9 +72,9 @@ function App() {
           path="/dashboard"
           element={
             !user ? (
-              <Navigate to="/" />
-            ) : role === null ? (
-              <Navigate to="/select-role" />
+              <Navigate to="/" replace />
+            ) : !role ? (
+              <Navigate to="/select-role" replace />
             ) : role === "admin" ? (
               <AdminDashboard />
             ) : role === "organizer" ? (
@@ -81,7 +87,7 @@ function App() {
           }
         />
 
-        {/* ================= ADMIN ROUTES (PROTECTED) ================= */}
+        {/* ================= ADMIN ROUTES ================= */}
         <Route
           path="/admin/organizers"
           element={
@@ -91,20 +97,17 @@ function App() {
           }
         />
 
-        {/* ================= FALLBACK ================= */}
         <Route
-          path="*"
-          element={<Navigate to="/" />}
+          path="/admin/events"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EventApprovals />
+            </ProtectedRoute>
+          }
         />
 
-        <Route
-        path="/admin/events"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <EventApprovals />
-          </ProtectedRoute>
-        }
-      />
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>
