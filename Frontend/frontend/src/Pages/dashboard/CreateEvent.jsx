@@ -18,10 +18,11 @@ export default function CreateEvent() {
       description,
       date,
       location,
-      createdBy: user.uid
+      createdBy: user.uid,
+      organizerEmail: user.email
     });
 
-    alert("Event created!");
+    alert("Event sent for approval 🔥");
 
     setTitle("");
     setDescription("");
@@ -31,17 +32,17 @@ export default function CreateEvent() {
 
   return (
     <div>
-      <h1>Create Event</h1>
+      <h2>Create Event</h2>
 
       <form onSubmit={handleSubmit}>
         <input
-          placeholder="Title"
+          placeholder="Event Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        <input
-          placeholder="Description"
+        <textarea
+          placeholder="Event Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
@@ -58,7 +59,9 @@ export default function CreateEvent() {
           onChange={(e) => setLocation(e.target.value)}
         />
 
-        <button type="submit">Create Event</button>
+        <button type="submit">
+          Submit Event
+        </button>
       </form>
     </div>
   );

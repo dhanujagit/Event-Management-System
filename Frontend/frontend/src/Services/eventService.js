@@ -12,7 +12,7 @@ export const createEvent = async (eventData) => {
 
       status: "pending",
 
-      createdAt: new Date()
+      createdAt: serverTimestamp()
     });
 
     return docRef.id;
