@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { db } from "../../firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import LogoutButton from "../../components/LogoutButton";
+import Navbar from "../../components/Navbar";
 
 
 export default function OrganizerDashboard() {
@@ -32,6 +33,7 @@ export default function OrganizerDashboard() {
 
   return (
     <div>
+      <Navbar />
       <h1>Organizer Dashboard</h1>
 
       <CreateEvent />
