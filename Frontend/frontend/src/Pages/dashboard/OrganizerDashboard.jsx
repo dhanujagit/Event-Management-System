@@ -40,13 +40,37 @@ export default function OrganizerDashboard() {
 
       <h2>My Events</h2>
 
-      {myEvents.map((event) => (
-        <div key={event.id}>
-          <h3>{event.title}</h3>
-          <p>{event.date}</p>
-          <p>Status: {event.status}</p>
-        </div>
-      ))}
+      {myEvents.length === 0 ? (
+        <p>No events created yet.</p>
+      ) : (
+        myEvents.map((event) => (
+          <div
+            key={event.id}
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "8px"
+            }}
+          >
+            <h3>{event.title}</h3>
+
+            <p>{event.description}</p>
+
+            <p>
+              <strong>Date:</strong> {event.date}
+            </p>
+
+            <p>
+              <strong>Location:</strong> {event.location}
+            </p>
+
+            <p>
+              <strong>Status:</strong> {event.status}
+            </p>
+          </div>
+        ))
+      )}
       <LogoutButton />
     </div>
   );
