@@ -9,8 +9,7 @@ import {
 } from "firebase/firestore";
 
 
-
-// CREATE EVENT (Organizer)
+// CREATE EVENT
 export const createEvent = async (eventData) => {
   try {
     const docRef = await addDoc(collection(db, "events"), {
@@ -27,27 +26,50 @@ export const createEvent = async (eventData) => {
 };
 
 
-// GET EVENTS (Attendee view)
-// Only approved events show
+// GET ALL APPROVED EVENTS
 export const getEvents = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, "events"));
+    const snapshot = await getDocs(collection(db, "events"));
 
-    const events = querySnapshot.docs.map((doc) => ({
+    const events = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data()
     }));
 
-    return events.filter((event) => event.status === "approved");
+    return events.filter(
+      (event) => event.status === "approved"
+    );
 
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error(error);
     return [];
   }
 };
 
 
-// JOIN EVENT (create ticket)
+// GET EVENTS CREATED BY ORGANIZER
+export const getOrganizerEvents = async (organizerId) => {
+  try {
+    const q = query(
+      collection(db, "events"),
+      where("createdBy", "==", organizerId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
+
+// JOIN EVENT
 export const joinEvent = async (userId, eventId) => {
   try {
     const q = query(
@@ -62,17 +84,20 @@ export const joinEvent = async (userId, eventId) => {
       throw new Error("Already registered for this event");
     }
 
-    const docRef = await addDoc(collection(db, "tickets"), {
-      userId,
-      eventId,
-      status: "registered",
-      createdAt: serverTimestamp()
-    });
+    const docRef = await addDoc(
+      collection(db, "tickets"),
+      {
+        userId,
+        eventId,
+        status: "registered",
+        createdAt: serverTimestamp()
+      }
+    );
 
     return docRef.id;
 
   } catch (error) {
-    console.error("Join event error:", error);
+    console.error(error);
     throw error;
   }
 };

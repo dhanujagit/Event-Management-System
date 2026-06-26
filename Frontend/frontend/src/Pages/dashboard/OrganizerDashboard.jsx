@@ -1,39 +1,45 @@
-import CreateEvent from "./CreateEvent";
-import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
-import { db } from "../../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import LogoutButton from "../../components/LogoutButton";
-import Navbar from "../../components/Navbar";
 
+import { useAuth } from "../../context/AuthContext";
+
+import { getOrganizerEvents } from "../../services/eventService";
+
+import Navbar from "../../components/Navbar";
+import LogoutButton from "../../components/LogoutButton";
+
+import CreateEvent from "./CreateEvent";
 
 export default function OrganizerDashboard() {
+
   const { user } = useAuth();
+
   const [myEvents, setMyEvents] = useState([]);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const q = query(
-        collection(db, "events"),
-        where("createdBy", "==", user.uid)
-      );
 
-      const snapshot = await getDocs(q);
+    if (!user) return;
 
-      const events = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    loadEvents();
 
-      setMyEvents(events);
-    };
-
-    fetchEvents();
   }, [user]);
+
+
+
+  const loadEvents = async () => {
+
+    const events = await getOrganizerEvents(user.uid);
+
+    setMyEvents(events);
+
+  };
+
+
 
   return (
     <div>
+
       <Navbar />
+
       <h1>Organizer Dashboard</h1>
 
       <CreateEvent />
@@ -41,18 +47,23 @@ export default function OrganizerDashboard() {
       <h2>My Events</h2>
 
       {myEvents.length === 0 ? (
+
         <p>No events created yet.</p>
+
       ) : (
+
         myEvents.map((event) => (
+
           <div
             key={event.id}
             style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-              borderRadius: "8px"
+              border: "1px solid gray",
+              padding: 10,
+              marginBottom: 10,
+              borderRadius: 8
             }}
           >
+
             <h3>{event.title}</h3>
 
             <p>{event.description}</p>
@@ -68,10 +79,15 @@ export default function OrganizerDashboard() {
             <p>
               <strong>Status:</strong> {event.status}
             </p>
+
           </div>
+
         ))
+
       )}
+
       <LogoutButton />
+
     </div>
   );
 }

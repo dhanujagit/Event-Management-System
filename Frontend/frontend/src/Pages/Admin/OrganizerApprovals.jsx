@@ -1,93 +1,97 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+
+import {
+  getOrganizerApplications,
+  approveOrganizer,
+  rejectOrganizer
+} from "../../services/adminService";
 
 export default function OrganizerApprovals() {
+
   const [applications, setApplications] = useState([]);
 
-  // FETCH APPLICATIONS
-  const fetchApplications = async () => {
-    const snapshot = await getDocs(collection(db, "organizerApplications"));
+  const loadApplications = async () => {
 
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const data = await getOrganizerApplications();
 
     setApplications(data);
+
   };
 
   useEffect(() => {
-    fetchApplications();
+    loadApplications();
   }, []);
 
-  // APPROVE ORGANIZER
-  const approveOrganizer = async (app) => {
-    // 1. update user role
-    await updateDoc(doc(db, "users", app.uid), {
-      role: "organizer"
-    });
+  const handleApprove = async (application) => {
 
-    // 2. update application status
-    await updateDoc(doc(db, "organizerApplications", app.id), {
-      status: "approved"
-    });
+    await approveOrganizer(application);
 
     alert("Organizer Approved!");
-    fetchApplications();
+
+    loadApplications();
+
   };
 
-  // REJECT ORGANIZER
-  const rejectOrganizer = async (app) => {
-    await updateDoc(doc(db, "organizerApplications", app.id), {
-      status: "rejected"
-    });
+  const handleReject = async (application) => {
 
-    // revert user back to attendee
-    await updateDoc(doc(db, "users", app.uid), {
-      role: "attendee"
-    });
+    await rejectOrganizer(application);
 
     alert("Organizer Rejected!");
-    fetchApplications();
+
+    loadApplications();
+
   };
 
   return (
     <div>
+
       <h1>Organizer Applications (Admin)</h1>
 
-      {applications.length === 0 && <p>No applications yet</p>}
+      {applications.length === 0 && (
+        <p>No applications yet.</p>
+      )}
 
-      {applications.map((app) => (
+      {applications.map((application) => (
+
         <div
-          key={app.id}
+          key={application.id}
           style={{
             border: "1px solid gray",
             margin: 10,
-            padding: 10
+            padding: 10,
+            borderRadius: 8
           }}
         >
-          <h3>{app.organizationName}</h3>
-          <p>Type: {app.organizationType}</p>
-          <p>Phone: {app.phone}</p>
-          <p>Email: {app.email}</p>
-          <p>Status: {app.status}</p>
+
+          <h3>{application.organizationName}</h3>
+
+          <p>Type: {application.organizationType}</p>
+
+          <p>Phone: {application.phone}</p>
+
+          <p>Email: {application.email}</p>
+
+          <p>Status: {application.status}</p>
 
           <button
-            onClick={() => approveOrganizer(app)}
-            disabled={app.status !== "pending"}
+            onClick={() => handleApprove(application)}
+            disabled={application.status !== "pending"}
           >
             Approve
           </button>
 
           <button
-            onClick={() => rejectOrganizer(app)}
-            disabled={app.status !== "pending"}
+            onClick={() => handleReject(application)}
+            disabled={application.status !== "pending"}
+            style={{ marginLeft: 10 }}
           >
             Reject
           </button>
+
         </div>
+
       ))}
+
     </div>
   );
 }

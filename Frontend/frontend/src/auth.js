@@ -6,7 +6,7 @@ import {
 } from "firebase/auth";
 
 import { auth, googleProvider } from "./firebase";
-import { createUserProfile } from "./userService";
+import { createUserProfile } from "./Services/userService";
 
 // GOOGLE LOGIN
 export const signInWithGoogle = async () => {

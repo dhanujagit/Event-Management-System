@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { db } from "../../firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc
-} from "firebase/firestore";
+import { getMyTickets } from "../../services/ticketService";
 
 export default function MyTickets() {
   const { user } = useAuth();
@@ -16,38 +8,15 @@ export default function MyTickets() {
   const [tickets, setTickets] = useState([]);
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      const q = query(
-        collection(db, "tickets"),
-        where("userId", "==", user.uid)
-      );
+    if (!user) return;
 
-      const snapshot = await getDocs(q);
-
-      const ticketData = [];
-
-      for (const ticketDoc of snapshot.docs) {
-        const ticket = ticketDoc.data();
-
-        const eventRef = doc(db, "events", ticket.eventId);
-        const eventSnap = await getDoc(eventRef);
-
-        if (eventSnap.exists()) {
-          ticketData.push({
-            id: ticketDoc.id,
-            ...ticket,
-            event: eventSnap.data()
-          });
-        }
-      }
-
-      setTickets(ticketData);
-    };
-
-    if (user) {
-      fetchTickets();
-    }
+    loadTickets();
   }, [user]);
+
+  const loadTickets = async () => {
+    const data = await getMyTickets(user.uid);
+    setTickets(data);
+  };
 
   return (
     <div>
@@ -61,23 +30,23 @@ export default function MyTickets() {
             key={ticket.id}
             style={{
               border: "1px solid gray",
-              margin: 10,
               padding: 10,
+              marginBottom: 10,
               borderRadius: 8
             }}
           >
             <h3>{ticket.event.title}</h3>
 
             <p>
-              Status: {ticket.status}
+              <strong>Status:</strong> {ticket.status}
             </p>
 
             <p>
-              Date: {ticket.event.date}
+              <strong>Date:</strong> {ticket.event.date}
             </p>
 
             <p>
-              Location: {ticket.event.location}
+              <strong>Location:</strong> {ticket.event.location}
             </p>
           </div>
         ))
