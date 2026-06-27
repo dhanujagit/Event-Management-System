@@ -69,35 +69,3 @@ export const getOrganizerEvents = async (organizerId) => {
 };
 
 
-// JOIN EVENT
-export const joinEvent = async (userId, eventId) => {
-  try {
-    const q = query(
-      collection(db, "tickets"),
-      where("userId", "==", userId),
-      where("eventId", "==", eventId)
-    );
-
-    const existing = await getDocs(q);
-
-    if (!existing.empty) {
-      throw new Error("Already registered for this event");
-    }
-
-    const docRef = await addDoc(
-      collection(db, "tickets"),
-      {
-        userId,
-        eventId,
-        status: "registered",
-        createdAt: serverTimestamp()
-      }
-    );
-
-    return docRef.id;
-
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};

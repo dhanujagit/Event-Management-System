@@ -5,45 +5,128 @@ import {
   where,
   getDocs,
   doc,
-  getDoc
+  getDoc,
+  addDoc,
+  serverTimestamp,
+  runTransaction
 } from "firebase/firestore";
 
-// ================================
-// GET ALL TICKETS OF A USER
-// ================================
-export const getMyTickets = async (userId) => {
-  try {
-    const q = query(
-      collection(db, "tickets"),
-      where("userId", "==", userId)
-    );
 
-    const snapshot = await getDocs(q);
+// SAFE TICKET NUMBER GENERATOR
+const generateTicketNumber = async () => {
 
-    const tickets = [];
+  const counterRef = doc(db, "counters", "tickets");
 
-    for (const ticketDoc of snapshot.docs) {
-      const ticket = ticketDoc.data();
+  const newNumber = await runTransaction(db, async (transaction) => {
 
-      const eventRef = doc(db, "events", ticket.eventId);
-      const eventSnap = await getDoc(eventRef);
+    const snap = await transaction.get(counterRef);
 
-      if (eventSnap.exists()) {
-        tickets.push({
-          id: ticketDoc.id,
-          ...ticket,
-          event: {
-            id: eventSnap.id,
-            ...eventSnap.data()
-          }
-        });
-      }
+    if (!snap.exists()) {
+      transaction.set(counterRef, { current: 1 });
+      return 1;
     }
 
-    return tickets;
+    const current = snap.data().current || 0;
+    const next = current + 1;
 
-  } catch (error) {
-    console.error("Error loading tickets:", error);
-    return [];
+    transaction.update(counterRef, {
+      current: next
+    });
+
+    return next;
+
+  });
+
+  const year = new Date().getFullYear();
+
+  return `EVT-${year}-${String(newNumber).padStart(6, "0")}`;
+};
+
+// Join Event
+
+export const joinEvent = async (userId, eventId) => {
+
+  const existingQuery = query(
+    collection(db, "tickets"),
+    where("userId", "==", userId),
+    where("eventId", "==", eventId)
+  );
+
+  const existing = await getDocs(existingQuery);
+
+  if (!existing.empty) {
+    throw new Error("Already registered.");
   }
+
+  const ticketNumber = await generateTicketNumber();
+
+  const ticketRef = await addDoc(
+    collection(db, "tickets"),
+    {
+      ticketNumber,
+      userId,
+      eventId,
+
+      status: "registered",
+
+      checkedIn: false,
+
+      checkedInAt: null,
+
+      qrCode: ticketNumber,
+
+      createdAt: serverTimestamp()
+    }
+  );
+
+  return ticketRef.id;
+
+};
+
+
+
+// =====================================
+// Get My Tickets
+// =====================================
+
+export const getMyTickets = async (userId) => {
+
+  const q = query(
+    collection(db, "tickets"),
+    where("userId", "==", userId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const tickets = [];
+
+  for (const ticketDoc of snapshot.docs) {
+
+    const ticket = ticketDoc.data();
+
+    const eventRef = doc(db, "events", ticket.eventId);
+
+    const eventSnap = await getDoc(eventRef);
+
+    if (eventSnap.exists()) {
+
+      tickets.push({
+
+        id: ticketDoc.id,
+
+        ...ticket,
+
+        event: {
+          id: eventSnap.id,
+          ...eventSnap.data()
+        }
+
+      });
+
+    }
+
+  }
+
+  return tickets;
+
 };

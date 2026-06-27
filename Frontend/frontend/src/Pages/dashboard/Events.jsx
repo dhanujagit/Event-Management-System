@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getEvents, joinEvent } from "../../services/eventService";
+import { getEvents } from "../../services/eventService";
+import { joinEvent } from "../../services/ticketService";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Events() {
