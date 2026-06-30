@@ -12,19 +12,17 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import OrganizerApprovals from "./pages/admin/OrganizerApprovals";
 import EventApprovals from "./pages/admin/EventApprovals";
 
+import QRScanner from "./pages/organizer/QRScanner";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { user, role, loading } = useAuth();
 
-  // 🔥 HARD STOP UNTIL AUTH LOADS
+  //HARD STOP UNTIL AUTH LOADS
   if (loading) {
-    return (
-      <div style={{ padding: 20 }}>
-        Loading app...
-      </div>
-    );
+    return <div style={{ padding: 20 }}>Loading app...</div>;
   }
 
   return (
@@ -35,9 +33,11 @@ function App() {
         <Route
           path="/"
           element={
-            user
-              ? <Navigate to="/dashboard" replace />
-              : <Login />
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login />
+            )
           }
         />
 
@@ -84,6 +84,16 @@ function App() {
             ) : (
               <AttendeeDashboard />
             )
+          }
+        />
+
+        {/* ================= SCANNER ROUTE =============== */}
+        <Route
+          path="/scanner"
+          element={
+            <ProtectedRoute allowedRoles={["organizer", "admin"]}>
+              <QRScanner />
+            </ProtectedRoute>
           }
         />
 

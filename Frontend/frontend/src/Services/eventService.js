@@ -5,16 +5,34 @@ import {
   query,
   where,
   getDocs,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  updateDoc,
+  increment
 } from "firebase/firestore";
 
 
+// ===============================
+// INCREMENT ATTENDANCE (FIXED)
+// ===============================
+export const incrementAttendance = async (eventId) => {
+  const ref = doc(db, "events", eventId);
+
+  await updateDoc(ref, {
+    checkedInCount: increment(1)
+  });
+};
+
+
+// ===============================
 // CREATE EVENT
+// ===============================
 export const createEvent = async (eventData) => {
   try {
     const docRef = await addDoc(collection(db, "events"), {
       ...eventData,
       status: "pending",
+      checkedInCount: 0, // 🔥 IMPORTANT FIX
       createdAt: serverTimestamp()
     });
 
@@ -26,19 +44,19 @@ export const createEvent = async (eventData) => {
 };
 
 
-// GET ALL APPROVED EVENTS
+// ===============================
+// GET APPROVED EVENTS
+// ===============================
 export const getEvents = async () => {
   try {
     const snapshot = await getDocs(collection(db, "events"));
 
-    const events = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    return events.filter(
-      (event) => event.status === "approved"
-    );
+    return snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter((event) => event.status === "approved");
 
   } catch (error) {
     console.error(error);
@@ -47,7 +65,9 @@ export const getEvents = async () => {
 };
 
 
-// GET EVENTS CREATED BY ORGANIZER
+// ===============================
+// ORGANIZER EVENTS
+// ===============================
 export const getOrganizerEvents = async (organizerId) => {
   try {
     const q = query(
@@ -67,5 +87,3 @@ export const getOrganizerEvents = async (organizerId) => {
     return [];
   }
 };
-
-

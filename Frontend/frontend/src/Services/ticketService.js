@@ -1,4 +1,5 @@
 import { db } from "../firebase";
+
 import {
   collection,
   query,
@@ -12,21 +13,29 @@ import {
 } from "firebase/firestore";
 
 
-// SAFE TICKET NUMBER GENERATOR
+// ==========================================
+// GENERATE UNIQUE TICKET NUMBER
+// ==========================================
+
 const generateTicketNumber = async () => {
 
   const counterRef = doc(db, "counters", "tickets");
 
-  const newNumber = await runTransaction(db, async (transaction) => {
+  const nextNumber = await runTransaction(db, async (transaction) => {
 
-    const snap = await transaction.get(counterRef);
+    const counterSnap = await transaction.get(counterRef);
 
-    if (!snap.exists()) {
-      transaction.set(counterRef, { current: 1 });
+    if (!counterSnap.exists()) {
+
+      transaction.set(counterRef, {
+        current: 1
+      });
+
       return 1;
     }
 
-    const current = snap.data().current || 0;
+    const current = counterSnap.data().current || 0;
+
     const next = current + 1;
 
     transaction.update(counterRef, {
@@ -39,12 +48,22 @@ const generateTicketNumber = async () => {
 
   const year = new Date().getFullYear();
 
-  return `EVT-${year}-${String(newNumber).padStart(6, "0")}`;
+  return `EVT-${year}-${String(nextNumber).padStart(6, "0")}`;
+
 };
 
-// Join Event
 
-export const joinEvent = async (userId, eventId) => {
+// ==========================================
+// JOIN EVENT
+// ==========================================
+
+export const joinEvent = async (
+  userId,
+  eventId,
+  userData = {}
+) => {
+
+  // Prevent duplicate registrations
 
   const existingQuery = query(
     collection(db, "tickets"),
@@ -55,17 +74,38 @@ export const joinEvent = async (userId, eventId) => {
   const existing = await getDocs(existingQuery);
 
   if (!existing.empty) {
-    throw new Error("Already registered.");
+    throw new Error("Already registered for this event.");
   }
 
+  // Generate unique ticket number
+
   const ticketNumber = await generateTicketNumber();
+
+  // QR payload
+
+  const qrPayload = JSON.stringify({
+    ticketNumber,
+    eventId,
+    userId
+  });
+
+  // Save ticket
 
   const ticketRef = await addDoc(
     collection(db, "tickets"),
     {
+
       ticketNumber,
+
+      qrCode: qrPayload,
+
       userId,
+
       eventId,
+
+      name: userData.name || "",
+
+      email: userData.email || "",
 
       status: "registered",
 
@@ -73,9 +113,8 @@ export const joinEvent = async (userId, eventId) => {
 
       checkedInAt: null,
 
-      qrCode: ticketNumber,
-
       createdAt: serverTimestamp()
+
     }
   );
 
@@ -84,10 +123,9 @@ export const joinEvent = async (userId, eventId) => {
 };
 
 
-
-// =====================================
-// Get My Tickets
-// =====================================
+// ==========================================
+// GET MY TICKETS
+// ==========================================
 
 export const getMyTickets = async (userId) => {
 
@@ -117,8 +155,11 @@ export const getMyTickets = async (userId) => {
         ...ticket,
 
         event: {
+
           id: eventSnap.id,
+
           ...eventSnap.data()
+
         }
 
       });

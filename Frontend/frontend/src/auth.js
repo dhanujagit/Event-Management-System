@@ -39,10 +39,26 @@ export const registerWithEmail = async (email, password) => {
     await createUserProfile(user);
 
     return user;
-  } catch (error) {
-    console.error("Signup error:", error);
-    throw error;
+  } catch (err) {
+  console.error(err);
+
+  switch (err.code) {
+    case "auth/email-already-in-use":
+      setMsg("This email is already registered.");
+      break;
+
+    case "auth/invalid-credential":
+      setMsg("Invalid email or password.");
+      break;
+
+    case "auth/weak-password":
+      setMsg("Password must be at least 6 characters.");
+      break;
+
+    default:
+      setMsg(err.message);
   }
+}
 };
 
 // LOGOUT

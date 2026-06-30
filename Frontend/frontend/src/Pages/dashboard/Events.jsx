@@ -19,8 +19,10 @@ export default function Events() {
 
   const handleJoinEvent = async (eventId) => {
     try {
-      await joinEvent(user.uid, eventId);
-
+      await joinEvent(user.uid, eventId, {
+        name: user.displayName || "",
+        email: user.email || ""
+      });
       alert("Successfully registered!");
     } catch (error) {
       alert(error.message);
